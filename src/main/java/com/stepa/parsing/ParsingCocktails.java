@@ -1,26 +1,29 @@
 package com.stepa.parsing;
 
 import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
 public class ParsingCocktails {
+    protected static ThreadLocal<RemoteWebDriver> driver = new ThreadLocal<>();
 
     //запуск браузера
-    public static WebDriver launchBrowser(String url, String chromeDriver) {
-        WebDriver driver;
-        System.setProperty(
-                "webdriver.chrome.driver",
-                chromeDriver);
-        driver = new ChromeDriver();
-        driver.get(url);
-        return driver;
+    public static WebDriver setupThread() throws MalformedURLException {
+        String remote_url_chrome = "http://localhost:4445/wd/hub";
+        ChromeOptions options = new ChromeOptions().setHeadless(true);
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        driver.set(new RemoteWebDriver(new URL(remote_url_chrome), options));
+        return driver.get();
     }
 
     public static List<String> navHref (WebDriver driver){
@@ -80,8 +83,8 @@ public class ParsingCocktails {
         String url = prop.getProperty("url");
         String user = prop.getProperty("username");
         String pass = prop.getProperty("password");
-        String chromeDriver = prop.getProperty("driver");
-        WebDriver driver = launchBrowser(site,chromeDriver);
+        WebDriver driver = setupThread();
+        driver.navigate().to(site);
         Thread.sleep(1000);//задержка 1 сек
         List<String> navLinks = navHref(driver); // коллекция ссылок по главам справочника. по умолчанию браузер сразу на 1-ой
         //цикл на перебор navLinks и сохранения ссылок
@@ -102,7 +105,6 @@ public class ParsingCocktails {
             pick[i] = driver.findElement(By.xpath("//body/div[1]/div[2]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/p[2]")).getText();
             technique[i] = driver.findElement(By.cssSelector("div.page-wrapper:nth-child(2) div.main-wrapper div.main div.main-inner div.content div.container div.row div.col-md-8.col-lg-9 div.push-top-bottom div.listing-detail > div:nth-child(13)")).getText();
             comps[i]= driver.findElement(By.xpath("//head/meta[5]")).getAttribute("content");// ингридиенты в ед числе
-
             ToMySQL addRowInTable = new ToMySQL();
             addRowInTable.insertToTable(url,user,pass,name[i], ingr[i], pick[i], technique[i], comps[i].substring(comps[i].indexOf("Состав: ")));
             System.out.println("Добавлено " + i + " коктейля");

@@ -5,10 +5,6 @@ import java.sql.*;
 
 public class ToMySQL {
 
-    static final String DB_URL = "jdbc:mysql://localhost:3308/dev_cocktailtb_db";
-    static final String USER = "dev_cocktailtb_db_user";
-    static final String PASS = "dev_cocktailtb_db_password";
-
     public void createTable (String DB_URL,String USER,String PASS) {
         // Open a connection
         try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
@@ -25,7 +21,7 @@ public class ToMySQL {
             String alter = "ALTER TABLE cocktails CONVERT TO CHARACTER SET utf8";
             String drop = "drop table cocktails";
             stmt.executeUpdate(drop);
-            System.out.println("Droped table in given database...");
+            System.out.println("Dropped table in given database...");
             stmt.executeUpdate(sql);
             System.out.println("Created table in given database...");
             stmt.executeUpdate(alter);
@@ -43,15 +39,13 @@ public class ToMySQL {
         // Open a connection
         try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
             PreparedStatement pstmt = conn.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS)
-        ) { // the mysql insert statement
-            // create the mysql insert preparedstatement
+        ) {
             pstmt.setString (1, name);
             pstmt.setString (2, ingr);
             pstmt.setString   (3, pick);
             pstmt.setBlob(4, docInBlob);
             pstmt.setString (5, comps);
 
-            // execute the preparedstatement
             pstmt.executeUpdate();
             System.out.println("Added row in given database...");
         } catch (SQLException e) {
